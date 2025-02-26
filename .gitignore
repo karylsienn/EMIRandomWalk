@@ -1,0 +1,98 @@
+################################################################################
+# Python Ignored Files
+################################################################################
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment folders
+venv/
+env/
+.venv/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Tools
+.venv/
+migrations/  # If using Django/Flask migrations, keep them only if you track them
+*.log
+
+# Editor-specific (VSCode, PyCharm, etc.)
+.vscode/
+.idea/
+
+# dotenv environment variables
+.env
+.env.*
+
+################################################################################
+# R Ignored Files
+################################################################################
+
+# R history/log
+.Rhistory
+.Rapp.history
+.RData
+
+# RStudio project files / user settings
+.Rproj.user/
+.Ruserdata
+
+# RStudio project file (optional—keep if you want to version-control the .Rproj)
+# *.Rproj
+
+# Packrat/renv dependencies
+packrat/
+renv/
+renv.lock
+
+# .Rprofile is often user- or environment-specific
+.Rprofile
+
+# If you use logs or local data
+*.Rout
+*.Rout.save
+
+################################################################################
+# General OS / Editor / Misc
+################################################################################
+
+# macOS
+.DS_Store
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+
+
+################################################################################
+# simulations results
+################################################################################
+final_results/*
+analytical_ecdfs/
+simulation_results/
+*.csv

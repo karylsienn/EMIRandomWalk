@@ -1,0 +1,63 @@
+---
+title: "Plots for EMC Europe 2025"
+author: "Karol Niewiadomski"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Libraries
+
+We will use `tidyverse` suite for data manipulations and plotting, `patchwork` for putting several plots together, and `tikzDevice` for rendering to LaTeX. For mathematical symbol's rendering we'd also add package `amsmath` to the `tikzLatexPackages` options.
+
+```{r}
+library(tidyverse)
+library(patchwork)
+library(tikzDevice)
+options(tikzLatexPackages = c(options()$tikzLatexPackages, "\\usepackage{amsmath}\n"))
+
+
+```
+
+## Data import
+
+We import both the empirical cumulative distribution functions for $N$ signals, as well as the analytical solutions.
+
+```{r}
+
+ecdf_tbl <- read_csv("ecdf_tbl.csv")
+analytical_cdf_tbl <- read_csv("analytical_cdf_tbl.csv")
+
+```
+
+```{r}
+
+selected_n <- 12
+ecdf_tbl %>% 
+  filter(harmonic_no == 1, N == selected_n) %>%
+  filter(x < selected_n) %>% 
+  ggplot(aes(x, y)) +
+  geom_step(aes(colour = signal_type)) +
+  geom_line(data = analytical_cdf_tbl %>% filter(N == selected_n, x < selected_n),
+            linetype = 'dashed', linewidth = 1) +
+  labs(x = "r", y = "ecdf", colour = NULL, shape = NULL,
+       title = str_interp("No. converters ${selected_n}, harmonic 1")) +
+  scale_shape_manual(values = c("solid", "dashed"),
+                     labels = c("simulations", "analytical")) +
+  theme_bw() +
+  theme(legend.position = "bottom") 
+
+```
+
+You can add options to executable code like this
+
+```{r}
+tikz("envelopes.tex", standAlone = TRUE, height = 3.3, width = 3.4, pointsize = 8)
+ggp
+dev.off()
+
+system("pdflatex envelopes.tex")
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
