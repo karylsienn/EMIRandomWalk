@@ -26,38 +26,91 @@ We import both the empirical cumulative distribution functions for $N$ signals, 
 
 ```{r}
 
-ecdf_tbl <- read_csv("ecdf_tbl.csv")
-analytical_cdf_tbl <- read_csv("analytical_cdf_tbl.csv")
+ecdf_tbl <- read_csv("ecdf_tbl.csv") %>% mutate(analytical = FALSE)
+analytical_cdf_tbl <- read_csv("analytical_cdf_tbl.csv") %>%
+  mutate(analytical = TRUE, signal_type = "analytical")
 
 ```
 
+## Plotting
+
+The below should be repeated for `selected_n`, which will be saved as separate plots.
+
+We choose to only show certain functions, not to overwhelm the reader. The chosen functions are stored in `funs_to_show`. Also we select only certain harmonics in `harmonics_to_show`.
+
 ```{r}
 
+# Set the parameter for the converters.
 selected_n <- 12
-ecdf_tbl %>% 
-  filter(harmonic_no == 1, N == selected_n) %>%
-  filter(x < selected_n) %>% 
-  ggplot(aes(x, y)) +
-  geom_step(aes(colour = signal_type)) +
-  geom_line(data = analytical_cdf_tbl %>% filter(N == selected_n, x < selected_n),
-            linetype = 'dashed', linewidth = 1) +
-  labs(x = "r", y = "ecdf", colour = NULL, shape = NULL,
-       title = str_interp("No. converters ${selected_n}, harmonic 1")) +
-  scale_shape_manual(values = c("solid", "dashed"),
-                     labels = c("simulations", "analytical")) +
-  theme_bw() +
-  theme(legend.position = "bottom") 
+
+# Set the harmonics we want to show.
+harmonics_to_show <- c(1, 7, 11, 19)
+
+# Also which functions do we want to show
+funs_to_show <- c("damped_sinusoid", "damped_exponential", "damped_chirp", "lorentzian_pulse",
+                  "half_sine_pulse", "gaussian_pulse", "damped_sawtooth", "analytical")
+
+# Filter the tables.
+ecdf_tbl_toplot <- ecdf_tbl %>%
+  filter(harmonic_no %in% harmonics_to_show,
+         N == selected_n,
+         x < selected_n,
+         signal_type %in% funs_to_show) %>%
+  mutate(signal_type = factor(signal_type, levels = funs_to_show))
+
+analytical_cdf_toplot <- analytical_cdf_tbl %>% 
+  filter(N == selected_n, x < selected_n) %>%
+  mutate(signal_type = factor(signal_type, levels = funs_to_show))
+
 
 ```
 
-You can add options to executable code like this
+The actual plot. The colors were chosen to contribute nicely to a palette, with the exception of the color for the analytic (theoretical) solution, which was on purpose chosen with a high contrast. The line types and line widths were also changed to differentiate between the analytic and simulation results.
 
 ```{r}
-tikz("envelopes.tex", standAlone = TRUE, height = 3.3, width = 3.4, pointsize = 8)
+# Some plotting parameters
+colours <- c("#005F6B", "#E0C097", "#D97B42", 
+             "#2D6A4F", "#5B2C6F", "#B22222", 
+             "#4169E1", "#FF4500")
+legend_labels <- c("Damped sinusoid", "Exponential", "Damped chirp", 
+                   "Lorentzian pulse", "Half-sine pulse", "Gaussian pulse",
+                   "Sawtooth", "\\textbf{Theoretical}")
+
+ggp <- ggplot(data = ecdf_tbl_toplot,
+              mapping = aes(x = x, y = y, 
+                            linetype = interaction(analytical, signal_type), 
+                            colour = interaction(analytical, signal_type),
+                            linewidth = interaction(analytical, signal_type))) +
+  geom_step() +
+  geom_line(data = analytical_cdf_toplot) +
+  annotate("rect", xmin = selected_n - 1, xmax = Inf, ymin = -Inf, ymax = Inf, 
+           fill = "#FF4500", alpha = 0.2) + 
+  labs(x = "$r$", y = "$P(|Z_N[h]| \\leq r)$", linetype = NULL, colour = NULL) +
+  scale_x_continuous(breaks = seq(0, selected_n, by = 1), 
+                     minor_breaks = seq(0, selected_n, by = 0.5)) +
+  scale_linetype_manual(values = c(rep("solid", 7), "dashed"), labels = legend_labels) +
+  scale_colour_manual(values = colours, labels = legend_labels) +
+  scale_linewidth_manual(values = c(rep(0.4, 7), 0.8), guide = NULL) +
+  facet_grid(harmonic_no~., 
+             labeller = as_labeller(\(l) str_c("$h =", as.character(l), "$"))) +
+  theme_bw(base_size = 6.5) +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(15, 'pt'),
+        legend.key.height = unit(7, 'pt'),
+        legend.margin = margin(t = -5, r = 0, b = 0, l = 0)
+        ) 
+
+show(ggp)
+
+```
+
+### Save to `.tex` and export to `.pdf`
+
+```{r}
+filename <- str_interp("ecdf_N${selected_n}.tex")
+tikz(filename, standAlone = TRUE, height = 3.3, width = 3.3, pointsize = 8)
 ggp
 dev.off()
 
-system("pdflatex envelopes.tex")
+system(str_interp("pdflatex ${filename}"))
 ```
-
-The `echo: false` option disables the printing of code (only output is displayed).
