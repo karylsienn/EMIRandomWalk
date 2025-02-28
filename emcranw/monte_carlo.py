@@ -156,39 +156,3 @@ def run_custom_simulation_batch(signal_configs, num_runs=1000,
 
     return results
 
-# def run_custom_simulation_batch(signal_configs, num_runs=1000,
-#                                 selected_harmonics=None, 
-#                                 output_dir='simulation_results',
-#                                 n_processes=None):
-
-#     if selected_harmonics is None:
-#         selected_harmonics = [1, 3, 5, 7, 101]
-    
-#     if n_processes is None:
-#         n_processes = min(len(signal_configs), multiprocessing.cpu_count())
-    
-#     def _worker(cfg_key):
-#         cfg = signal_configs[cfg_key]
-#         func = cfg['func']
-#         params = cfg['params']
-#         N = cfg.get('N', 5)
-#         fs = cfg.get('fs', 10.0)
-#         T_total = cfg.get('T_total', 0.5)
-#         sample_rate = cfg.get('sample_rate', 1000)
-#         print(f"Running {cfg_key} with N={N}, fs={fs} ...")
-#         return monte_carlo_simulation(func, params, num_runs=num_runs, 
-#                                       N=N, fs=fs, T_total=T_total,
-#                                       sample_rate=sample_rate,
-#                                       output_dir=output_dir,
-#                                       selected_harmonics=selected_harmonics)
-    
-#     keys = list(signal_configs.keys())
-#     if n_processes > 1:
-#         with multiprocessing.Pool(n_processes) as pool:
-#             results = pool.map(_worker, keys)
-#     else:
-#         results = []
-#         for k in keys:
-#             results.append(_worker(k))
-    
-#     return results

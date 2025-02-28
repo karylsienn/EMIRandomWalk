@@ -3,7 +3,7 @@
 import os
 import glob
 import pandas as pd
-
+import matplotlib.pyplot as plt
 import numpy as np
 from signals import (
     damped_sinusoid,
@@ -17,84 +17,79 @@ from signals import (
 )
 from monte_carlo import run_custom_simulation_batch
 
+# Time duration to simulate
+T_total = 0.1
+sample_rate = 2000
+
+# "Base" configurations for your 8 signals
+base_configs = {
+    'sinusoid': {
+        'func': damped_sinusoid,
+        'params': {'A': 1.0, 'f': 50.0, 'lambda_': 60.0, 'phase': 0.0},
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    },
+    'chirp': {
+        'func': damped_chirp,
+        # e.g., from 40 Hz to 60 Hz within 0.1s, high damping
+        'params': {'A': 1.0, 'f0': 30.0, 'f1': 120.0, 'lambda_': 0.01},
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    },
+    'exponential': {
+        'func': damped_exponential,
+        'params': {'A': 1.0, 'lambda_': 60.0},
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    },
+    'gaussian': {
+        'func': gaussian_pulse,
+        'params': {'A': 1.0, 't0': 0.05, 'sigma': 0.01},  # quick
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    },
+    'square': {
+        'func': damped_square_wave,
+        'params': {'A': 1.0, 'duty': 0.5, 'lambda_': 60.0},
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    },
+    'lorentzian': {
+        'func': lorentzian_pulse,
+        'params': {'A': 1.0, 't0': 0.05, 'gamma': 0.001}, 
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    },
+    'half_sine': {
+        'func': half_sine_pulse,
+        'params': {'A': 1.0, 'width': 0.3, 't0': 0.0, 'lambda_': 60.0},
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    },
+    'sawtooth': {
+        'func': damped_sawtooth,
+        'params': {'A': 1.0, 'lambda_': 1.0},
+        'fs': 10.0,
+        'T_total': T_total,
+        'sample_rate': sample_rate
+    }
+}
+
 def run_multiple_N():
     """
     Loop over N in [3, 5, 8, 12], run Monte Carlo for 8 signal types,
     and produce simulation result folders.
     """
-    # We define signal configurations so that fs=10.0 (one switching period = 0.1s),
-    # but the signals themselves have higher frequencies or large damping to
-    # "fit" within that 0.1s window.
-    
-    # Time duration to simulate (just one or two switching periods, e.g. 0.1 or 0.2)
-    T_total = 0.1
-    sample_rate = 1000
-    num_runs = 1000  # Monte Carlo runs
-    
     # We'll analyze first 10 or 15 harmonics. Adjust as needed.
     selected_harmonics = list(range(1, 21))
-    
-    # "Base" configurations for your 8 signals:
-    # (We'll omit N here so we can override it in the loop.)
-    base_configs = {
-        'sinusoid': {
-            'func': damped_sinusoid,
-            'params': {'A': 1.0, 'f': 50.0, 'lambda_': 60.0, 'phase': 0.0},
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        },
-        'chirp': {
-            'func': damped_chirp,
-            # e.g., from 40 Hz to 60 Hz within 0.1s, high damping
-            'params': {'A': 1.0, 'f0': 40.0, 'f1': 60.0, 'lambda_': 60.0},
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        },
-        'exponential': {
-            'func': damped_exponential,
-            'params': {'A': 1.0, 'lambda_': 60.0},
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        },
-        'gaussian': {
-            'func': gaussian_pulse,
-            'params': {'A': 1.0, 't0': 0.05, 'sigma': 0.01},  # quick
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        },
-        'square': {
-            'func': damped_square_wave,
-            'params': {'A': 1.0, 'duty': 0.5, 'lambda_': 60.0},
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        },
-        'lorentzian': {
-            'func': lorentzian_pulse,
-            'params': {'A': 1.0, 't0': 0.05, 'gamma': 0.001}, 
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        },
-        'half_sine': {
-            'func': half_sine_pulse,
-            'params': {'A': 1.0, 'width': 0.3, 't0': 0.0, 'lambda_': 60.0},
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        },
-        'sawtooth': {
-            'func': damped_sawtooth,
-            'params': {'A': 1.0, 'lambda_': 60.0},
-            'fs': 10.0,
-            'T_total': T_total,
-            'sample_rate': sample_rate
-        }
-    }
+    num_runs = 1000  # Monte Carlo runs
     
     # We'll store a list of all result directories so we can compile them later.
     all_result_dirs = []
@@ -122,6 +117,48 @@ def run_multiple_N():
     
     return all_result_dirs
 
+def generate_example_signals(output_dir="example_signals",plot=True):
+    """
+    Generate a single example of each signal type and save to files.
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Generate time array
+    t = np.linspace(0, T_total, int(T_total * sample_rate), endpoint=False)
+    
+    # For each signal type, generate an example and save
+    for signal_name, config in base_configs.items():
+        print(f"Generating example for {signal_name}...")
+        
+        # Extract parameters
+        signal_func = config['func']
+        params = config['params']
+        fs = config['fs']
+        
+        # Generate signal
+        signal = signal_func(t, fs=fs, **params)
+        
+        if plot:
+            # Plot signal
+            plt.figure(figsize=(10, 6))
+            plt.plot(t, signal)
+            plt.title(f"{signal_name.capitalize()} Signal")
+            plt.xlabel("Time (s)")
+            plt.ylabel("Amplitude")
+            plt.grid(True)
+            
+            # Save plot
+            plot_file = os.path.join(output_dir, f"{signal_name}_example.png")
+            plt.savefig(plot_file)
+            plt.close()
+        
+        # Save signal data as CSV
+        data = pd.DataFrame({"time": t, "amplitude": signal})
+        csv_file = os.path.join(output_dir, f"{signal_name}_example.csv")
+        data.to_csv(csv_file, index=False)
+    
+    print(f"Example signals saved to {output_dir}")
 
 def compile_monte_carlo_results(simulation_dirs, output_csv="compiled_results.csv"):
     """
@@ -177,7 +214,6 @@ def compile_monte_carlo_results(simulation_dirs, output_csv="compiled_results.cs
     big_df.to_csv(output_csv, index=False)
     print(f"Compiled results saved to {output_csv}")
 
-
 def main():
     # 1) Run the simulations for N=3,5,8,12
     simulation_dirs = run_multiple_N()
@@ -188,6 +224,7 @@ def main():
         output_csv="compiled_ecdf_data.csv"
     )
 
-
 if __name__ == "__main__":
     main()
+    # Generate example signals as a second step
+    generate_example_signals()

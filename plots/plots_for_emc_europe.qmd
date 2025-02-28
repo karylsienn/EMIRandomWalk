@@ -114,3 +114,69 @@ dev.off()
 
 system(str_interp("pdflatex ${filename}"))
 ```
+
+# Examples of signals 
+
+I also want to show examples of signals (in time domain) for this paper.
+
+```{r}
+lf <- list.files("../example_signals/", pattern = ".csv")
+# Read signals and add the information about signal type.
+signals <- map_dfr(lf, function(.filename) {
+  signal_example <- read_csv(file.path("../example_signals/", .filename)) 
+  signal_example <- mutate(signal_example, 
+                           signal_type = str_match(.filename, "([a-z]+)_example.csv")[,2])
+  return(signal_example)
+})
+
+funs_to_show <- c("sinusoid", "exponential", 
+                  "chirp", "lorentzian",
+                  "sine", "gaussian", "sawtooth")
+signals <- filter(signals, signal_type %in% funs_to_show)
+signals <- mutate(signals, signal_type = factor(signal_type, levels = funs_to_show))
+
+```
+
+Now, let's plots them.
+
+```{r}
+
+# Some plotting parameters
+colours <- c("#005F6B", "#E0C097", "#D97B42", 
+             "#2D6A4F", "#5B2C6F", "#B22222", 
+             "#4169E1")
+legend_labels <- c("Damped sinusoid", "Exponential", "Damped chirp", 
+                   "Lorentzian pulse", "Half-sine pulse", "Gaussian pulse",
+                   "Sawtooth")
+facet_labels <-  c("Damped\nsinusoid", "Exponential", "Damped\nchirp", 
+                   "Lorentzian\npulse", "Half-sine\npulse", "Gaussian\npulse",
+                   "Sawtooth")
+names(legend_labels) <- funs_to_show
+names(facet_labels) <- funs_to_show
+
+ggp <- signals %>%
+  ggplot(aes(time, amplitude, colour = signal_type)) +
+  geom_line() +
+  facet_grid(signal_type ~ ., scales = "free",
+             labeller = labeller(signal_type = facet_labels)) +
+  labs(x = "Time (s)", y = "Amplitude", colour = NULL) +
+  scale_colour_manual(values = colours, labels = legend_labels) +
+  theme_bw(base_size = 6.5) +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(15, 'pt'),
+        legend.key.height = unit(7, 'pt'),
+        legend.margin = margin(t = -5, r = 0, b = 0, l = 0),
+        strip.text.y = element_text(size = 4.5, angle = 0)) 
+
+```
+
+```{r}
+
+filename <- "signal_examples.tex"
+tikz(filename, standAlone = TRUE, height = 3.6, width = 3.3, pointsize = 8)
+ggp
+dev.off()
+
+system(str_interp("pdflatex ${filename}"))
+
+```
