@@ -39,7 +39,6 @@ The below should be repeated for `selected_n`, which will be saved as separate p
 We choose to only show certain functions, not to overwhelm the reader. The chosen functions are stored in `funs_to_show`. Also we select only certain harmonics in `harmonics_to_show`.
 
 ```{r}
-
 # Set the parameter for the converters.
 selected_n <- 12
 
@@ -49,6 +48,9 @@ harmonics_to_show <- c(1, 7, 11, 19)
 # Also which functions do we want to show
 funs_to_show <- c("damped_sinusoid", "damped_exponential", "damped_chirp", "lorentzian_pulse",
                   "half_sine_pulse", "gaussian_pulse", "damped_sawtooth", "analytical")
+```
+
+```{r}
 
 # Filter the tables.
 ecdf_tbl_toplot <- ecdf_tbl %>%
@@ -115,7 +117,7 @@ dev.off()
 system(str_interp("pdflatex ${filename}"))
 ```
 
-# Examples of signals 
+# Examples of signals
 
 I also want to show examples of signals (in time domain) for this paper.
 
@@ -137,11 +139,9 @@ signals <- mutate(signals, signal_type = factor(signal_type, levels = funs_to_sh
 
 ```
 
-Now, let's plots them.
+Now, let's plots them. Some initial parameters to be reused.
 
 ```{r}
-
-# Some plotting parameters
 colours <- c("#005F6B", "#E0C097", "#D97B42", 
              "#2D6A4F", "#5B2C6F", "#B22222", 
              "#4169E1")
@@ -153,6 +153,11 @@ facet_labels <-  c("Damped\nsinusoid", "Exponential", "Damped\nchirp",
                    "Sawtooth")
 names(legend_labels) <- funs_to_show
 names(facet_labels) <- funs_to_show
+```
+
+Now, the plot itself.
+
+```{r}
 
 ggp <- signals %>%
   ggplot(aes(time, amplitude, colour = signal_type)) +
@@ -173,6 +178,55 @@ ggp <- signals %>%
 ```{r}
 
 filename <- "signal_examples.tex"
+tikz(filename, standAlone = TRUE, height = 3.6, width = 3.3, pointsize = 8)
+ggp
+dev.off()
+
+system(str_interp("pdflatex ${filename}"))
+
+```
+
+## Harmonics
+
+Let's also plot the magnitude of the harmonics.
+
+```{r}
+Fs <- 2000 # Sampling frequency
+signals_fft <- group_by(signals, signal_type)
+signals_fft <- mutate(signals_fft, 
+                      icm = fft(amplitude),
+                      freq = 0: (n()-1) * Fs/n(),
+                      icm_mag = 2 * Mod(icm) / n())
+signals_fft <- slice(signals_fft, 1:(n()/2))
+signals_fft <- filter(signals_fft, freq %% 10 == 0)
+signals_fft <- ungroup(signals_fft)
+
+
+```
+
+Plot
+
+```{r}
+
+ggp <- ggplot(signals_fft, aes(freq, icm_mag, colour = signal_type, fill = signal_type)) +
+  geom_col(width = 0.1) +
+  scale_x_continuous(limits = c(0, 500)) +
+    facet_grid(signal_type ~ ., scales = "free",
+             labeller = labeller(signal_type = facet_labels)) +
+  labs(x = "Frequency (Hz)", y = "$|I_{\\text{CM}}[h]|$", colour = NULL, fill = NULL) +
+  scale_colour_manual(values = colours, labels = legend_labels) +
+  scale_fill_manual(values = colours, labels = legend_labels) +
+  theme_bw(base_size = 6.5) +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(15, 'pt'),
+        legend.key.height = unit(7, 'pt'),
+        legend.margin = margin(t = -5, r = 0, b = 0, l = 0),
+        strip.text.y = element_text(size = 4.5, angle = 0)) 
+
+```
+
+```{r}
+filename <- "signal_examples_fft.tex"
 tikz(filename, standAlone = TRUE, height = 3.6, width = 3.3, pointsize = 8)
 ggp
 dev.off()
