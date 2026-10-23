@@ -3,6 +3,23 @@
 Simulations for Random walk modelling of CM current, extended to include a suite of signals.
 The purpose of the repository is to verify that for certain classes of signals, we can model their behaviour for $N$ signals using Random Walk approach.
 
+### Related Publication
+
+The code in this repository was used to generate simulations presented in the following paper:
+
+> Karol Niewiadomski, Erjon Ballukja, Mattia Simonazzi, Leonardo Sandrolini, and Jacek Bojarski, “Extension of Random Walk Modelling of CM Current Harmonics in Multi-converter Setups,” in *2025 International Symposium on Electromagnetic Compatibility – EMC Europe*, 2025, pp. 916–921. [doi:10.1109/EMCEurope61644.2025.11176374](https://doi.org/10.1109/EMCEurope61644.2025.11176374).
+
+```bibtex
+@INPROCEEDINGS{11176374,
+  author={Niewiadomski, Karol and Ballukja, Erjon and Simonazzi, Mattia and Sandrolini, Leonardo and Bojarski, Jacek},
+  booktitle={2025 International Symposium on Electromagnetic Compatibility – EMC Europe},
+  title={Extension of Random Walk Modelling of CM Current Harmonics in Multi-converter Setups},
+  year={2025},
+  pages={916-921},
+  doi={10.1109/EMCEurope61644.2025.11176374}
+}
+```
+
 ### Usage
 
 To use this simulation tool, follow these steps:
